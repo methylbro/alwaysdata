@@ -10,7 +10,6 @@ class SiteTransformer
             ->create($data['href'], $data['id'])
             ->setName($data['name'])
         ;
-
         foreach ($data['addresses'] as $address) {
             $site->addAddress($address);
         }

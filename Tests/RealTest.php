@@ -2,6 +2,9 @@
 
 namespace Methylbro\Alwaysdata;
 
+use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Message\Response;
+
 use Methylbro\Alwaysdata\Model\SiteManager;
 use Methylbro\Alwaysdata\Transformer\SiteTransformer;
 
@@ -66,6 +69,54 @@ class ClientTest extends \PHPUnit_Framework_TestCase
 
         $accounts = $account_manager->findAll();
 
-        var_dump($accounts[0]);
+        //var_dump($accounts[0]);
     }
+
+    public function testError()
+    {
+        $client = $this->getClient();
+
+        $mock = new Mock([
+            new Response(404, [])
+        ]);
+
+        $client->getHttpClient()->getEmitter()->attach($mock);
+
+        $site_manager = new SiteManager(
+            $client,
+            new SiteTransformer()
+        );
+
+        $this->setExpectedException('\GuzzleHttp\Exception\ClientException');
+
+        $site = $site_manager->findByHref('/v1/site/00000/');
+    }
+
+    public function testGetSite()
+    {
+        $client = $this->getClient();
+
+        $site_transformer = new SiteTransformer();
+        $site_manager = new SiteManager(
+            $client,
+            $site_transformer
+        );
+        $site = $site_manager
+            ->create('/v1/site/1/', 1)
+            ->setName('test')
+        ;
+
+        $mock = new Mock([
+            new Response(200),
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n".
+            json_encode($site_transformer->objectToArray($site))
+        ]);
+
+        $client->getHttpClient()->getEmitter()->attach($mock);
+
+        $site = $site_manager->findByHref('/v1/site/1/');
+
+        $this->assertEquals('test', $site->getName());
+    }
+
 }

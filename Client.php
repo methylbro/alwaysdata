@@ -7,7 +7,7 @@ use GuzzleHttp\Client as HttpClient;
 class Client
 {
     const VERSION = 'v1';
-    protected $http_client;
+    private $http_client;
 
     public function __construct($login, $password)
     {
@@ -16,6 +16,11 @@ class Client
         ]);
 
         $this->http_client->setDefaultOption('auth', [$login, $password]);
+    }
+
+    public function getHttpClient()
+    {
+        return $this->http_client;
     }
 
     public function get($path)
